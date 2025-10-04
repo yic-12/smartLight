@@ -75,6 +75,8 @@ export struct  SOUY{
    * 局域网地址: http://192.168.2.170:8081/{path}
    * 校内网地址: http://10.214.166.140:8081/{path}
    */
+  //参数 path: string：必填，API 接口的具体路径
+  //参数 data?: ApiRequestData：可选，API 请求所需的业务数据（ApiRequestData 是自定义类型，需提前定义，如设备 ID、控制指令等）。
   private async callSmartHomeApi(path: string, data?: ApiRequestData): Promise<void> {
     try {
       // 生成token
@@ -189,7 +191,8 @@ export struct  SOUY{
                   
                   const deviceData: ApiRequestData = {
                     device: deviceType,
-                    action: 'activate',
+                    action: 'activate',//告诉 API “对该设备模块执行什么操作”（动作指令），activate 表示 “激活 / 启用”（对应场景：如激活定时功能、启用语音控制）。
+                                      // 若后续需要 “关闭” 操作，可将 action 改为 'deactivate'，需与后端 API 约定一致）
                     timestamp: Date.now()
                   };
                   await this.callSmartHomeApi('/device/control', deviceData);

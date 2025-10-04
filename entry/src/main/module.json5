@@ -3,6 +3,7 @@
     "routerMap": "$profile:route_map",
     "name": "entry",
     "type": "entry",
+    "requestPermissions": [{"name": "ohos.permission.INTERNET"}],
     "description": "$string:module_desc",
     "mainElement": "EntryAbility",
     "deviceTypes": [
@@ -47,7 +48,7 @@
             "name": "ohos.extension.backup",
             "resource": "$profile:backup_config"
           }
-        ],
+        ]
       }
     ]
   }
