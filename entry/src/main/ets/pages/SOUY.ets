@@ -1,5 +1,8 @@
 import { AppStorageV2 } from "@kit.ArkUI";
+import {  httpGet ,httpPost} from "../inter/SmartHomeApi";
+import { http } from "@kit.NetworkKit";
 import { TokenGenerator } from "../inter/MD5";
+import { Data1,Data2 ,SceneClass,ApiRequestData} from "../inter/Interface1";
 
 // 获取当前日期并格式化为 Dec 5, 2019 格式
 function formatDate(date?: Date): string {
@@ -20,20 +23,6 @@ function formatDate(date?: Date): string {
   // 拼接成 Dec 5, 2019 格式
   return `${month} ${day}, ${year}`;
 }
-
-interface  SceneClass{
-  text:string
-  icon:ResourceStr
-}
-
-interface ApiRequestData {
-  scene?: string;
-  device?: string;
-  action?: string;
-  timestamp: number;
-}
-
-
 @Builder
 export function SOUYBuilder() {
   SOUY();
