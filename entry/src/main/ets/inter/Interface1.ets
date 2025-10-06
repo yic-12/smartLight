@@ -30,3 +30,17 @@ export interface ApiRequestData {
   timestamp: number;
 }
 
+/**
+ * 定时任务项接口
+ * 定义单个定时任务的完整信息
+ */
+export interface TimerItem {
+  id: string;                    // 定时任务唯一标识符
+  name: string;                  // 定时任务名称（如：早晨起床、晚上休息）
+  time: string;                  // 执行时间，格式：HH:mm（如：07:00、23:00）
+  enabled: boolean;              // 是否启用该定时任务
+  repeat: number[];              // 重复周期数组，数字1-7代表周一到周日
+  deviceId: string;              // 关联的设备ID
+  action: '0' | '1';  // 定时动作：开灯或关灯
+}
+

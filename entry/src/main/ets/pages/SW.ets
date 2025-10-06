@@ -3,6 +3,9 @@ import { http } from "@kit.NetworkKit";
 import { TokenGenerator } from "../inter/MD5";
 import { Data1,Data2 } from "../inter/Interface1";
 import { HttpUtil } from "../inter/HttpUtil";
+import {PreferencesUtil,DeviceSettings} from "../inter/PreferencesUtil"
+import EntryAbility from "../entryability/EntryAbility"
+import { Context } from '@kit.AbilityKit'
 
 @Builder
 export function SWBuilder() {
@@ -38,10 +41,14 @@ export function SWBuilder() {
   }
   @State currentBrightness: number = 50
   @State currentColorTemperature: number = 50
+  @State turn:'1'|'0'='1'
 
-  async setLightBrightness(value1: number,value2:number) {
-    let success = await HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, value1,value2)
+  async setBrightness(value1: number,value2:number) {
+     await HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, value1,value2,'0')
   }
+
+
+
 
   build() {
     NavDestination() {
@@ -78,8 +85,12 @@ export function SWBuilder() {
     .onChange(async (value1: number) => {
       // 亮度调节滑块
       this.currentBrightness = value1  // 更新亮度值
-      this.setLightBrightness(this.currentBrightness,this.currentColorTemperature)
+      this.setBrightness(this.currentBrightness,this.currentColorTemperature)
       console.log(`请求GET `)
+      const ctx: Context = EntryAbility.appContext
+      if (ctx) {
+        PreferencesUtil.saveSettings(ctx, { brightness: this.currentBrightness, colorTemperature: this.currentColorTemperature })
+      }
     })
 }
           .width('100%')
@@ -94,13 +105,13 @@ export function SWBuilder() {
           .fontWeight(FontWeight.Medium)
           .fontColor('#2c2c2c')
         Blank()  // 占位空间
-        Text(this.currentBrightness + '%')  // 当前亮度百分比
+        Text(this.currentColorTemperature + '%')  // 当前亮度百分比
           .fontSize(16)
           .fontColor('#2c2c2c')
       }
       .width('100%')
       Slider({
-        value: this.currentBrightness,
+        value: this.currentColorTemperature,
         min: 0,      // 最小值 0%
         max: 100,    // 最大值 100%
         step: 1,     // 步长 1%
@@ -108,9 +119,13 @@ export function SWBuilder() {
       })
         .onChange(async (value2: number) => {
           // 亮度调节滑块
-          this.currentColorTemperature = value2  // 更新亮度值
-          this.setLightBrightness(this.currentBrightness,this.currentColorTemperature)
+          this.currentColorTemperature = value2 // 更新亮度值
+          this.setBrightness(this.currentBrightness,this.currentColorTemperature)
           console.log(`请求GET `)
+          const ctx: Context = EntryAbility.appContext
+          if (ctx) {
+            PreferencesUtil.saveSettings(ctx, { brightness: this.currentBrightness, colorTemperature: this.currentColorTemperature })
+          }
         })
     }
           .width('100%')
@@ -151,7 +166,23 @@ export function SWBuilder() {
     }.backgroundColor('#F2F8FB')
     .onReady((context: NavDestinationContext) => {
       this.pathStack = context.pathStack;
+        // 加载已保存的亮度与色温
+        const ctx: Context = EntryAbility.appContext;
+        if (ctx) {
+          const settings: DeviceSettings = PreferencesUtil.loadSettings(ctx);
+          this.currentBrightness = settings.brightness;
+          this.currentColorTemperature = settings.colorTemperature;
+        }
     })
+      .onAppear(() => {
+        // 页面出现时确保状态与存储同步
+        const ctx: Context = EntryAbility.appContext;
+        if (ctx) {
+          const settings: DeviceSettings = PreferencesUtil.loadSettings(ctx);
+          this.currentBrightness = settings.brightness;
+          this.currentColorTemperature = settings.colorTemperature;
+        }
+      })
 
   }
   }
