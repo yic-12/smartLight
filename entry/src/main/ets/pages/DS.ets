@@ -19,7 +19,7 @@ export struct DS {
   timestamp: string = Date.now().toString()
   url1="/SmartHome/ShenDaRest/getLights"
   url2='/SmartHome/ShenDaRest/controlLight'
-  httpRequest =http.createHttp()
+  //httpRequest =http.createHttp()
   context: Context = getContext(this) as Context;
   @State data1:Data1={
     project_id: '',

@@ -43,4 +43,15 @@ export interface TimerItem {
   deviceId: string;              // 关联的设备ID
   action: '0' | '1';  // 定时动作：开灯或关灯
 }
+export interface colorRgb{
+  r:number,
+  g:number,
+  b:number
+}
+export interface scenceRgb{
+  scence:string,
+  Rbg:colorRgb
+  Brightness:number,
+  temperature:number
+}
 
