@@ -1,14 +1,51 @@
 import {  httpGet ,httpPost} from "../inter/SmartHomeApi";
 import { http } from "@kit.NetworkKit";
 import { TokenGenerator } from "../inter/MD5";
-import { Data1,Data2 } from "../inter/Interface1";
+import { Data1,Data2,commands } from "../inter/Interface1";
 import { audio } from "@kit.AudioKit";
 import { speechRecognizer } from '@kit.CoreSpeechKit';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { PermissionManager } from '../utils/permissionMananger'
+import { Permissions } from '@kit.AbilityKit'
+import SpeechRecognizerManager from '../utils/SpeechRecognizerManager'
+import { HttpUtil } from "../inter/HttpUtil";
 
 // 语音识别组件
 @Component
 export struct VoiceRecognitionComponent {
+  URL = "http://192.168.2.170:8081";
+  timestamp: string = Date.now().toString()
+  url1 = "/SmartHome/ShenDaRest/getLights"
+  url2 = '/SmartHome/ShenDaRest/controlLight'
+  @State
+  text: string = ""
+  // 2 实时语音识别
+  fn2 = () => {
+    SpeechRecognizerManager.init(res => {
+      console.log("实时语音识别", JSON.stringify(res))
+     this.text = res.result
+    })
+    console.log("打开语音")
+  }
+  //3.停止语音识别
+  fn3 = () => {
+    SpeechRecognizerManager.release();
+    console.log("停止语音识别并释放资源");
+  }
+  fn4=()=>{
+    if(this.text==='开'||'亮'){
+      HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 50,50,'0')
+    }else if(this.text==='关'||'熄'){
+      HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 0,0,'1')
+    }
+  }
+@State Command:commands[]=[
+  {name:'turn_on_light',patter:['打开灯', '开灯', '亮灯'],action:'0'},
+  {name:'turn_off_light',patter:['关闭灯', '关灯', '熄灯'],action:'1'},
+  {name:'adjust_brightness',patter:['调亮一点', '调暗一点', '亮度调到50%'],action:'0'},
+  {name:'change_color',patter:['切换颜色', '变成红色', '蓝色灯光'],action:'0'},
+]
+
   @State isRecording: boolean = false;
   @State recordingTime: number = 0;
   @State recordingText: string = "点击开始语音识别";
@@ -173,8 +210,11 @@ export struct VoiceRecognitionComponent {
       .onClick(() => {
         if (this.isRecording) {
           this.stopRecording();
+          this.fn3()
         } else {
           this.startRecording();
+          this.fn2()
+          this.fn4()
         }
       })
 
@@ -203,7 +243,6 @@ export struct VoiceRecognitionComponent {
       .backgroundColor('#F8F9FA')
       .borderRadius(12)
       .width('90%')
-
       Blank()
     }
     .width('100%')
@@ -257,10 +296,26 @@ export struct YY {
     lightness : 1,      // 亮度值，可选参数（与w_channel可能重复，取决于API设计）
   }
 
+  // 1 申请权限
+  fn1 = async () => {
+    // 准备好需要申请的权限 麦克风权限
+    const permissions: Permissions[] = ["ohos.permission.MICROPHONE"]
+    // 检查是否拥有权限
+    const isPermission = await PermissionManager.checkPermission(permissions)
+    if (!isPermission) {
+      //   如果没权限，就主动申请
+      PermissionManager.requestPermission(permissions)
+    }
+  }
+    aboutToAppear(): void {
+       this.fn1()
+      //console.log('litePagr')
+   }
   build() {
     NavDestination() {
-      VoiceRecognitionComponent()
-
+      Column(){
+        VoiceRecognitionComponent()
+      }
 
     }
     .onReady((context: NavDestinationContext) => {

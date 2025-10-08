@@ -54,4 +54,9 @@ export interface scenceRgb{
   Brightness:number,
   temperature:number
 }
+export interface commands{
+  name:string,
+  patter:string[],
+  action:string
+}
 

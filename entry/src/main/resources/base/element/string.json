@@ -11,6 +11,10 @@
     {
       "name": "EntryAbility_label",
       "value": "智能照明系统"
+    },
+    {
+      "name": "reason",
+      "value": "用于获取用户的录音"
     }
   ]
 }
