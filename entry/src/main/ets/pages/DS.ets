@@ -1,5 +1,4 @@
 // 跳转页面入口函数
-import {  httpGet ,httpPost} from "../inter/SmartHomeApi";
 import { http } from "@kit.NetworkKit";
 import { TokenGenerator } from "../inter/MD5";
 import { Data1,Data2,TimerItem } from "../inter/Interface1";
@@ -7,6 +6,7 @@ import EntryAbility from "../entryability/EntryAbility"
 import { Context } from '@kit.AbilityKit'
 import { HttpUtil } from "../inter/HttpUtil";
 import { PreferencesUtil } from "../inter/PreferencesUtil";
+import {deviceControls} from "../utils/device"
 @Builder
 export function DSBuilder() {
   DS();
@@ -39,7 +39,8 @@ export struct DS {
     type_uuid: '',       // 设备类型UUID
     lightness : 1,      // 亮度值，可选参数（与w_channel可能重复，取决于API设计）
   }
-  @State timerList: TimerItem[] = [];
+  @State timerList: TimerItem[] = [
+  ];
 
   @State isAdding: boolean = false;              // 是否处于添加新定时任务模式
   @State newTimerName: string = '';              // 新定时任务名称
@@ -79,8 +80,8 @@ export struct DS {
     }
   }
 
-  async setBrightness(value1: number,value2:number,value3:string) {
-    await HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, value1,value2,value3)
+  async setBrightness(value1: number,value2:number,value3:string,id:string) {
+    await HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, value1,value2,value3,id)
     console.log('测试定时')
   }
   build() {
@@ -244,7 +245,7 @@ export struct DS {
       try {
         const brightness = this.currentBrightness
         const colorTemp = this.currentColorTemperature
-        await this.setBrightness(brightness, colorTemp, item.action)
+        await this.setBrightness(brightness, colorTemp, item.action,item.deviceId)
         // 执行完成后自动关闭该定时任务开关（Toggle 置为关）
         item.enabled = false
         await this.saveTimerData()
@@ -294,9 +295,9 @@ export struct DS {
             .onChange(async (value: boolean) => {
               item.enabled = value;  // 更新启用状态
               if(item.enabled){
-                this.setBrightness(this.currentBrightness,this.currentColorTemperature,this.selectedAction)
+                this.setBrightness(this.currentBrightness,this.currentColorTemperature,this.selectedAction,item.deviceId)
               }else{
-                this.setBrightness(this.currentBrightness,this.currentColorTemperature,this.selectedAction='1')
+                this.setBrightness(this.currentBrightness,this.currentColorTemperature,this.selectedAction='1',item.deviceId)
               }
               await this.saveTimerData();  // 保存到持久化存储
             })

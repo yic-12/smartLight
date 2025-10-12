@@ -12,20 +12,22 @@ export class TokenGenerator {
 
   /**
    * 生成API请求token
+   * @param timestamp 用于生成token的时间戳，如果不提供则使用当前时间
    * @returns Promise<string> 生成的MD5 token
    */
-  static async generateToken(): Promise<string> {
+  static async generateToken(timestamp?: string): Promise<string> {
     try {
-      // 获取当前时间戳
-      const timestamp: number = Date.now();
+      // 使用传入的时间戳或获取当前时间戳
+      const actualTimestamp: string = timestamp || Date.now().toString();
       
       // 拼接时间戳和密钥
-      const rawStr: string = `${timestamp}${TokenGenerator.SECRET_KEY}`;
+      const rawStr: string = `${actualTimestamp}${TokenGenerator.SECRET_KEY}`;
       
       console.info(`[TokenGenerator] 原始字符串: ${rawStr}`);
 
       // 使用标准编码方式将字符串转换为字节数组
-      const encodedData: Uint8Array = new util.TextEncoder().encodeInto(rawStr);
+      // 正确：encode() 直接返回字符串对应的Uint8Array
+      const encodedData: Uint8Array = new util.TextEncoder().encode(rawStr);
 
       // 创建MD5摘要算法实例
       const md5 = cryptoFramework.createMd("MD5");
@@ -37,7 +39,8 @@ export class TokenGenerator {
       const md5Result = await md5.digest();
       
       // 将结果转换为十六进制字符串
-      const hexToken = TokenGenerator.dataBlobToHex(md5Result);
+      // 先生成大写，再由调用方根据需要选择大小写
+      const hexToken = TokenGenerator.dataBlobToHex(md5Result).toUpperCase();
       
       console.info(`[TokenGenerator] 生成的Token: ${hexToken}`);
       
@@ -81,7 +84,7 @@ export class TokenGenerator {
    * @returns boolean 是否为有效的MD5格式
    */
   static isValidTokenFormat(token: string): boolean {
-    const md5Regex = /^[a-f0-9]{32}$/i;
+    const md5Regex = /^[A-Fa-f0-9]{32}$/;
     return md5Regex.test(token);
   }
 }

@@ -33,10 +33,10 @@ export struct VoiceRecognitionComponent {
     console.log("停止语音识别并释放资源");
   }
   fn4=()=>{
-    if(this.text==='开'||'亮'){
-      HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 50,50,'0')
-    }else if(this.text==='关'||'熄'){
-      HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 0,0,'1')
+    if(this.text==='开灯'){
+     // HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 50,50,'0')
+    }else if(this.text==='关灯'){
+     // HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 0,0,'1')
     }
   }
 @State Command:commands[]=[
@@ -215,6 +215,7 @@ export struct VoiceRecognitionComponent {
           this.startRecording();
           this.fn2()
           this.fn4()
+          //HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, 50,50,'0')
         }
       })
 

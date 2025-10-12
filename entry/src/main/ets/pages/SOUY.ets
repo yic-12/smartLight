@@ -2,8 +2,9 @@ import { AppStorageV2 } from "@kit.ArkUI";
 import {  httpGet ,httpPost} from "../inter/SmartHomeApi";
 import { http } from "@kit.NetworkKit";
 import { TokenGenerator } from "../inter/MD5";
-import { Data1,Data2 ,SceneClass,ApiRequestData, colorRgb,scenceRgb} from "../inter/Interface1";
+import { Data1,Data2 ,SceneClass,ApiRequestData, colorRgb,scenceRgb,DeviceControlItem} from "../inter/Interface1";
 import { HttpUtil } from "../inter/HttpUtil";
+import { deviceClass,exper,per,break1 } from "../utils/device";
 
 // 获取当前日期并格式化为 Dec 5, 2019 格式
 function formatDate(date?: Date): string {
@@ -32,14 +33,15 @@ export function SOUYBuilder() {
 export struct  SOUY{
   pathStack: NavPathStack = AppStorageV2.connect(NavPathStack,'navStack',()=>new NavPathStack())!;
   URL = "http://192.168.2.170:8081";
+  //URL= "http://10.214.166.140:8081"
   timestamp: string = Date.now().toString()
   url1="/SmartHome/ShenDaRest/getLights"
   url2='/SmartHome/ShenDaRest/controlLight'
   @State scene:SceneClass[]=[
-    {text:'阅读',icon:$r('app.media.reading')},
-    {text:'睡眠',icon:$r('app.media.sleep')},
-    {text:'会客',icon:$r('app.media.chat')},
-    {text:'影视',icon:$r('app.media.watch')}
+    {text:'教学',icon:$r('app.media.reading')},
+    {text:'实操',icon:$r('app.media.sleep')},
+    {text:'会议',icon:$r('app.media.chat')},
+    {text:'休息',icon:$r('app.media.watch')}
   ]
   @State devices:SceneClass[]=[
     {text:'色温调节',icon:$r('app.media.sewen')},
@@ -48,16 +50,16 @@ export struct  SOUY{
     {text:'自由选择',icon:$r('app.media.gexinghua')}
   ]
   @State scence1:scenceRgb[]=[
-    {scence:'阅读',Rbg:{r:1,g:2,b:3},Brightness:20,temperature:20},
-    {scence:'睡眠',Rbg:{r:1,g:2,b:3},Brightness:20,temperature:20},
-    {scence:'会客',Rbg:{r:1,g:2,b:3},Brightness:20,temperature:20},
-    {scence:'影视',Rbg:{r:1,g:2,b:3},Brightness:20,temperature:20},
+    {scence:'教学',device:deviceClass},
+    {scence:'实操',device:exper},
+    {scence:'会议',device:per},
+    {scence:'休息',device:break1},
   ]
   @State currentIndex1:number=-1
   @State currentIndex2:number=-1
 
-  async setBrightness(value1: number,value2:number,value3:string,color1:colorRgb) {
-    await HttpUtil.getInstance().setLightColorBrightness(`${this.URL}${this.url2}`, value1,value2,value3,color1)
+  async setBrightness(value1: number,value2:number,value3:string,id:string) {
+    await HttpUtil.getInstance().setLightBrightness(`${this.URL}${this.url2}`, value1,value2,value3,id)
     console.log('测试场景')
   }
 
@@ -96,21 +98,30 @@ export struct  SOUY{
                   .fontColor(Color.Black)
               }
               .onClick(async ()=>{
-                this.currentIndex1 = this.currentIndex1 === index ? -1 : index;
-                
-                // 当选中场景时，调用智能家居API
-                if (this.currentIndex1 === index) {
-                 // const sceneNames = ['reading', 'sleep', 'meeting', 'entertainment'];
-                  const sceneName = this.scence1[index];
-                  
-                  // 调用API设置场景
-               //   const sceneData: ApiRequestData = {
-                   // scene: sceneName,
-                   // timestamp: Date.now()
-                 // };
-                 // await this.callSmartHomeApi('/SmartHome/ShenDaRest/controlLight', sceneData);
-                  await this.setBrightness(sceneName.Brightness,sceneName.temperature,'0',sceneName.Rbg)
+                const sceneData = this.scence1[index];
+                // 切换选择：首次选中为“开”，再次点击同一项为“关”
+                const isTurningOff = this.currentIndex1 === index;
+                // 更新当前索引，高亮仅在“开”时保留
+                this.currentIndex1 = isTurningOff ? -1 : index;
+
+                // 根据点击意图构造设备列表：开= '0'，关= '1'
+                const mappedDevices: DeviceControlItem[] = []
+                for (let i = 0; i < sceneData.device.length; i++) {
+                  const d = sceneData.device[i]
+                  const item = {
+                    control_sub_id: d.control_sub_id,
+                    control_sub_state: isTurningOff ? '1' : '0',
+                    r_channel:d.r_channel,
+                    w_channel: d.w_channel,
+                    y_channel: d.y_channel,
+                    type_uuid: d.type_uuid ? d.type_uuid : 'LIGHT_GROUP',
+                  } as DeviceControlItem
+                  mappedDevices.push(item)
                 }
+                await HttpUtil.getInstance().controlColorMultipleDevices(`${this.URL}${this.url2}`, mappedDevices);
+                //await HttpUtil.getInstance().controlMultipleDevices(`${this.URL}${this.url2}`, mappedDevices);
+                console.log('场景控制多设备：', sceneData.scence);
+                console.log('设备', JSON.stringify(mappedDevices))
               })
               .padding(15)
               .layoutWeight(1)
@@ -144,17 +155,7 @@ export struct  SOUY{
                 .onClick(async () => {
                   this.currentIndex2 = index1;
                   
-                  // 调用API控制设备
-                 // const deviceTypes = ['color_temperature', 'timer', 'voice_control', 'custom'];
-                 // const deviceType = deviceTypes[index1];
-                  
-                  //const deviceData: ApiRequestData = {
-                  //  device: deviceType,
-                   // action: 'activate',//告诉 API “对该设备模块执行什么操作”（动作指令），activate 表示 “激活 / 启用”（对应场景：如激活定时功能、启用语音控制）。
-                                      // 若后续需要 “关闭” 操作，可将 action 改为 'deactivate'，需与后端 API 约定一致）
-                   // timestamp: Date.now()
-                //  };
-                 // await this.callSmartHomeApi('/device/control', deviceData);
+
                   
                   // 导航到对应页面
                   if (this.currentIndex2 === 0) {

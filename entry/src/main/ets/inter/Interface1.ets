@@ -1,3 +1,5 @@
+
+
 export interface Data1{
   project_id:string,
   timestamp:string
@@ -50,13 +52,30 @@ export interface colorRgb{
 }
 export interface scenceRgb{
   scence:string,
-  Rbg:colorRgb
-  Brightness:number,
-  temperature:number
+  device: DeviceControlItem[]
 }
 export interface commands{
   name:string,
   patter:string[],
   action:string
 }
+// 多设备控制请求数据结构
+export interface MultiDeviceControlData {
+  timestamp: string;        // 请求时间戳，用于认证和防重放
+  token: string;           // 认证令牌，基于时间戳和密钥生成
+  devices: DeviceControlItem[];  // 需要控制的设备列表
+}
+// 单个设备控制项
+export interface DeviceControlItem {
+  control_sub_id: string;  // 控制的子设备ID
+  control_sub_state: string;// 设备控制状态：'0'=打开，'1'=关闭
 
+  r_channel?: number;
+  g_channel?: number;
+  b_channel?: number;
+  w_channel?: number;      // 白光通道值（亮度控制）
+  y_channel?: number;      // 黄光通道值（色温控制）
+  //control_state?: string;  // 控制状态
+  type_uuid: string;       // 设备类型UUID
+  //lightness?: number;      // 亮度值
+}
